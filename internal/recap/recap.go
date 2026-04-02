@@ -315,18 +315,18 @@ func SpeakWithConfig(text string, cfg VoiceConfig) error {
 		if cfg.CortanaPath == "" {
 			return fmt.Errorf("cortana_path not set in config")
 		}
-		// Coqui XTTS v1.1 voice cloning from cortana.wav reference
+		// Coqui XTTS v2 voice cloning from cortana.wav reference
 		tmpWav := filepath.Join(os.TempDir(), "thaw-voice.wav")
 		script := fmt.Sprintf(`
 import os, sys
 os.environ["COQUI_TOS_AGREED"] = "1"
 from TTS.api import TTS
-tts = TTS("tts_models/multilingual/multi-dataset/xtts_v1.1", progress_bar=False)
+tts = TTS("tts_models/multilingual/multi-dataset/xtts_v2", gpu=False)
 tts.tts_to_file(text=%q, speaker_wav=%q, file_path=%q, language="en")
 `, text, cfg.CortanaPath, tmpWav)
 		pythonBin := "python3"
 		home, _ := os.UserHomeDir()
-		venvPython := filepath.Join(home, "tts-env", "bin", "python3")
+		venvPython := filepath.Join(home, "tts-env2", "bin", "python3")
 		if _, err := os.Stat(venvPython); err == nil {
 			pythonBin = venvPython
 		}
@@ -335,7 +335,6 @@ tts.tts_to_file(text=%q, speaker_wav=%q, file_path=%q, language="en")
 		if err := cmd.Run(); err != nil {
 			return err
 		}
-		// Play the generated audio
 		return exec.Command("afplay", tmpWav).Run()
 
 	case "elevenlabs":

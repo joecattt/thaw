@@ -448,11 +448,30 @@ func renderHTML(data BriefingData, bcfg config.BriefingConfig) string {
 <div class="fracture"></div>
 <div class="actions">
   <button class="act primary" onclick="alert('thaw → restoring...')">← Restore</button>
+  <button class="act" id="voice-btn" style="display:none" onclick="playVoice()">▶ Voice</button>
   <button class="act" onclick="document.body.style.opacity=0;setTimeout(()=>window.close(),500)">Dismiss</button>
 </div>
 <div class="footer">thaw %s — generated %s</div>
 </div></div>
 <script id="cortana-audio" type="text/plain"></script>
+<script>
+(function(){
+  var el=document.getElementById('cortana-audio');
+  var btn=document.getElementById('voice-btn');
+  if(!el||!el.textContent||el.textContent.length<100)return;
+  btn.style.display='';
+  var playing=false,audio=null;
+  window.playVoice=function(){
+    if(playing&&audio){audio.pause();audio=null;playing=false;btn.textContent='▶ Voice';return}
+    var b64=el.textContent;
+    audio=new Audio('data:audio/wav;base64,'+b64);
+    audio.onended=function(){playing=false;btn.textContent='▶ Voice'};
+    audio.play();
+    playing=true;
+    btn.textContent='■ Stop';
+  };
+})();
+</script>
 </body></html>`,
 		data.Version, data.Date, data.DeepWork, data.Sessions,
 		data.DeepWork, data.Sessions, len(data.Projects),
@@ -481,14 +500,14 @@ func generateVoiceAudio(data BriefingData, cfg config.Config) string {
 		return ""
 	}
 
-	// Generate audio via Coqui XTTS with voice cloning from cortana.wav
+	// Generate audio via Coqui XTTS v2 with voice cloning from cortana.wav
 	tmpWav := filepath.Join(os.TempDir(), "thaw-voice.wav")
 	script := fmt.Sprintf(`
 import os, sys
 os.environ["COQUI_TOS_AGREED"] = "1"
 try:
     from TTS.api import TTS
-    tts = TTS("tts_models/multilingual/multi-dataset/xtts_v1.1", progress_bar=False)
+    tts = TTS("tts_models/multilingual/multi-dataset/xtts_v2", gpu=False)
     tts.tts_to_file(
         text=%q,
         speaker_wav=%q,
@@ -500,10 +519,10 @@ except Exception as e:
     sys.exit(1)
 `, text, cortanaPath, tmpWav)
 
-	// Prefer the tts-env venv Python, fall back to system python3
+	// Prefer the tts-env2 venv Python, fall back to system python3
 	pythonBin := "python3"
 	home, _ := os.UserHomeDir()
-	venvPython := filepath.Join(home, "tts-env", "bin", "python3")
+	venvPython := filepath.Join(home, "tts-env2", "bin", "python3")
 	if _, err := os.Stat(venvPython); err == nil {
 		pythonBin = venvPython
 	}
@@ -531,22 +550,111 @@ except Exception as e:
 	return base64.StdEncoding.EncodeToString(audioData)
 }
 
-// buildRecapText generates a spoken recap from briefing data.
+// buildRecapText generates an opinionated spoken briefing — not a screen reader.
 func buildRecapText(data BriefingData) string {
 	var parts []string
 
-	parts = append(parts, fmt.Sprintf("Good morning. Here's your thaw briefing for %s.", data.Date))
-	parts = append(parts, fmt.Sprintf("You logged %s of deep work across %d sessions.", data.DeepWork, data.Sessions))
+	// Time-aware greeting
+	hour := time.Now().Hour()
+	greeting := "Good morning."
+	if hour >= 12 && hour < 17 {
+		greeting = "Good afternoon."
+	} else if hour >= 17 {
+		greeting = "Good evening."
+	}
 
+	// Headline framing based on intensity
+	intensity := ""
+	switch {
+	case data.Sessions <= 2:
+		intensity = fmt.Sprintf("Light day. %s of work across %d sessions.", data.DeepWork, data.Sessions)
+	case data.Sessions >= 8:
+		intensity = fmt.Sprintf("Heavy day. %s of deep work across %d sessions.", data.DeepWork, data.Sessions)
+	default:
+		intensity = fmt.Sprintf("%s of deep work across %d sessions.", data.DeepWork, data.Sessions)
+	}
+	parts = append(parts, greeting+" "+intensity)
+
+	// Separate blocked, active, and clean projects
+	var blocked, active, clean []ProjectData
 	for _, p := range data.Projects {
-		status := ""
-		if p.PriorityLabel != "" {
-			status = ", status " + p.PriorityLabel
+		switch p.PriorityLabel {
+		case "Blocked":
+			blocked = append(blocked, p)
+		default:
+			// Has running processes or recent activity = active
+			hasRunning := false
+			for _, proc := range p.Processes {
+				if proc.Running {
+					hasRunning = true
+					break
+				}
+			}
+			if hasRunning || p.Description != "" || p.FilesChanged > 0 {
+				active = append(active, p)
+			} else {
+				clean = append(clean, p)
+			}
 		}
-		parts = append(parts, fmt.Sprintf("%s%s, %s.", p.Name, status, p.TimeSpent))
+	}
+
+	// Blocked projects lead — they need attention
+	if len(blocked) > 0 {
+		if len(blocked) == 1 {
+			parts = append(parts, "One thing needs attention.")
+		} else {
+			parts = append(parts, fmt.Sprintf("%d things need attention.", len(blocked)))
+		}
+		for _, p := range blocked {
+			parts = append(parts, fmt.Sprintf("%s is blocked.", p.Name))
+			if p.Description != "" {
+				parts = append(parts, p.Description)
+			}
+			if len(p.ResumeCommands) > 0 {
+				parts = append(parts, fmt.Sprintf("Pick up with: %s.", p.ResumeCommands[0]))
+			}
+		}
+	}
+
+	// Active projects get context
+	for _, p := range active {
+		line := fmt.Sprintf("%s, %s.", p.Name, p.TimeSpent)
 		if p.Description != "" {
-			parts = append(parts, p.Description)
+			line += " " + p.Description
 		}
+		// Mention running processes naturally
+		var running []string
+		for _, proc := range p.Processes {
+			if proc.Running {
+				running = append(running, proc.Name)
+			}
+		}
+		if len(running) > 0 {
+			line += " " + strings.Join(running, " and ") + " still running."
+		}
+		parts = append(parts, line)
+	}
+
+	// Clean projects get compressed
+	if len(clean) > 0 {
+		var names []string
+		for _, p := range clean {
+			names = append(names, p.Name)
+		}
+		if len(names) == 1 {
+			parts = append(parts, fmt.Sprintf("%s is clean. Nothing to do there.", names[0]))
+		} else {
+			parts = append(parts, fmt.Sprintf("%s are clean.", strings.Join(names, " and ")))
+		}
+	}
+
+	// Closing directive — point at the blocker first, or first active project
+	if len(blocked) > 0 {
+		parts = append(parts, fmt.Sprintf("Start with %s.", blocked[0].Name))
+	} else if len(active) > 0 {
+		parts = append(parts, fmt.Sprintf("Start with %s.", active[0].Name))
+	} else {
+		parts = append(parts, "Everything is clean.")
 	}
 
 	return strings.Join(parts, " ")
