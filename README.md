@@ -6,6 +6,10 @@
 
 <p align="center"><strong>Close your laptop. Open it tomorrow. Everything's back.</strong></p>
 
+<p align="center">
+  <img src="demo.gif" alt="thaw demo" width="800"/>
+</p>
+
 Thaw captures your terminal workspace — every session, process, git branch, command history, and environment variable — and restores it exactly as it was.
 
 > Built by [JOECAT](https://github.com/joecattt) · Maintained by [Dreams Over Dollars Foundation](https://dreamsoverdollars.org) 501(c)(3)
