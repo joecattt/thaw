@@ -1,5 +1,5 @@
 build/
-thaw
+/thaw
 *.db
 *.log
 .DS_Store
