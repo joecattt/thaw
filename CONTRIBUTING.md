@@ -7,11 +7,11 @@ Thanks for your interest. Here's how to get set up and submit changes.
 ```bash
 git clone https://github.com/joecattt/thaw.git
 cd thaw
-make build    # requires Go 1.21+ and CGO_ENABLED=1
+make build    # requires Go 1.21+
 make test     # runs all tests
 ```
 
-You need a C compiler for SQLite (Xcode CLI tools on Mac, `apt install libsqlite3-dev` on Linux).
+No C compiler needed — SQLite is pure Go via `modernc.org/sqlite`.
 
 ## Running locally
 

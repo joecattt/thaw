@@ -11,7 +11,7 @@ import (
 	"strings"
 	"time"
 
-	_ "github.com/mattn/go-sqlite3"
+	_ "modernc.org/sqlite"
 
 	"github.com/joecattt/thaw/internal/config"
 	"github.com/joecattt/thaw/pkg/models"
@@ -57,7 +57,7 @@ func Open() (*Store, error) {
 
 // openPath opens a database at a specific path. Used by Open() and tests.
 func openPath(dbPath string) (*Store, error) {
-	db, err := sql.Open("sqlite3", dbPath+"?_journal_mode=WAL&_busy_timeout=5000")
+	db, err := sql.Open("sqlite", dbPath+"?_journal_mode=WAL&_busy_timeout=5000")
 	if err != nil {
 		return nil, fmt.Errorf("opening database: %w", err)
 	}

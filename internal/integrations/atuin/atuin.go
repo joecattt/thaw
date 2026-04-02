@@ -5,7 +5,7 @@ import (
 	"os"
 	"path/filepath"
 
-	_ "github.com/mattn/go-sqlite3"
+	_ "modernc.org/sqlite"
 )
 
 // Available returns true if atuin's history database exists.
@@ -18,7 +18,7 @@ func Available() bool {
 // Atuin stores session_id which correlates to a shell session.
 // We match by CWD + recent timestamps as a heuristic when PID isn't directly available.
 func HistoryForSession(cwd string, limit int) []string {
-	db, err := sql.Open("sqlite3", dbPath())
+	db, err := sql.Open("sqlite", dbPath())
 	if err != nil {
 		return nil
 	}
@@ -55,7 +55,7 @@ func HistoryForSession(cwd string, limit int) []string {
 
 // RecentGlobal returns the N most recent commands across all sessions.
 func RecentGlobal(limit int) []string {
-	db, err := sql.Open("sqlite3", dbPath())
+	db, err := sql.Open("sqlite", dbPath())
 	if err != nil {
 		return nil
 	}
