@@ -1,0 +1,43 @@
+version: 2
+
+builds:
+  - id: thaw
+    main: ./cmd/thaw
+    binary: thaw
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - darwin
+      - linux
+    goarch:
+      - amd64
+      - arm64
+    ldflags:
+      - -s -w -X main.version={{.Version}}
+
+archives:
+  - id: default
+    format: tar.gz
+    name_template: "thaw_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
+
+checksum:
+  name_template: "checksums.txt"
+
+release:
+  github:
+    owner: joecattt
+    name: thaw
+
+brews:
+  - repository:
+      owner: joecattt
+      name: homebrew-tap
+      token: "{{ .Env.HOMEBREW_TAP_TOKEN }}"
+    name: thaw
+    homepage: "https://github.com/joecattt/thaw"
+    description: "Freeze, restore, and recap your terminal sessions"
+    license: "MIT"
+    install: |
+      bin.install "thaw"
+    test: |
+      system "#{bin}/thaw", "--version"
