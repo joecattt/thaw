@@ -1,0 +1,64 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  release:
+    types: [created]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.21'
+      - name: Install SQLite dev
+        run: sudo apt-get install -y libsqlite3-dev
+      - name: Vet
+        run: go vet ./...
+      - name: Test
+        run: CGO_ENABLED=1 go test ./... -count=1 -v
+
+  build:
+    needs: test
+    if: github.event_name == 'release'
+    strategy:
+      matrix:
+        include:
+          - os: macos-latest
+            goos: darwin
+            goarch: arm64
+          - os: macos-13
+            goos: darwin
+            goarch: amd64
+          - os: ubuntu-latest
+            goos: linux
+            goarch: amd64
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.21'
+      - name: Install SQLite dev (Linux)
+        if: matrix.goos == 'linux'
+        run: sudo apt-get install -y libsqlite3-dev
+      - name: Build
+        env:
+          GOOS: ${{ matrix.goos }}
+          GOARCH: ${{ matrix.goarch }}
+          CGO_ENABLED: 1
+        run: go build -ldflags="-s -w" -o thaw-${{ matrix.goos }}-${{ matrix.goarch }} ./cmd/thaw
+      - name: Upload
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ github.event.release.upload_url }}
+          asset_path: ./thaw-${{ matrix.goos }}-${{ matrix.goarch }}
+          asset_name: thaw-${{ matrix.goos }}-${{ matrix.goarch }}
+          asset_content_type: application/octet-stream

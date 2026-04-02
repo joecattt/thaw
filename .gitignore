@@ -1,0 +1,5 @@
+build/
+thaw
+*.db
+*.log
+.DS_Store

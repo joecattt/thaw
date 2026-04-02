@@ -1,0 +1,91 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 800" width="800" height="800">
+  <defs>
+    <radialGradient id="bg" cx="50%" cy="45%" r="55%">
+      <stop offset="0%" stop-color="#0f3350"/>
+      <stop offset="100%" stop-color="#081e2e"/>
+    </radialGradient>
+    <linearGradient id="ice" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#b8e6f8"/>
+      <stop offset="40%" stop-color="#8cc8de"/>
+      <stop offset="100%" stop-color="#5da5c2"/>
+    </linearGradient>
+    <linearGradient id="melt" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#8cc8de"/>
+      <stop offset="50%" stop-color="#5da5c2" stop-opacity="0.6"/>
+      <stop offset="100%" stop-color="#3a8aaa" stop-opacity="0.15"/>
+    </linearGradient>
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="6" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <filter id="softglow">
+      <feGaussianBlur stdDeviation="12" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <filter id="frost" x="0%" y="0%" width="100%" height="100%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.015" numOctaves="4" seed="7"/>
+      <feColorMatrix type="saturate" values="0"/>
+      <feComponentTransfer>
+        <feFuncR type="linear" slope="0.08" intercept="0.06"/>
+        <feFuncG type="linear" slope="0.1" intercept="0.12"/>
+        <feFuncB type="linear" slope="0.12" intercept="0.18"/>
+        <feFuncA type="linear" slope="0.15" intercept="0"/>
+      </feComponentTransfer>
+    </filter>
+  </defs>
+  <rect width="800" height="800" fill="url(#bg)" rx="48"/>
+  <rect width="800" height="800" filter="url(#frost)" rx="48" opacity="0.5"/>
+  <circle cx="400" cy="310" r="180" fill="rgba(140,200,220,0.04)" filter="url(#softglow)"/>
+  <g transform="translate(400,310)" filter="url(#glow)">
+    <line x1="0" y1="0" x2="0" y2="-130" stroke="url(#ice)" stroke-width="5" stroke-linecap="round"/>
+    <line x1="0" y1="-50" x2="-30" y2="-80" stroke="url(#ice)" stroke-width="3.5" stroke-linecap="round"/>
+    <line x1="0" y1="-50" x2="30" y2="-80" stroke="url(#ice)" stroke-width="3.5" stroke-linecap="round"/>
+    <line x1="0" y1="-85" x2="-22" y2="-107" stroke="url(#ice)" stroke-width="2.5" stroke-linecap="round"/>
+    <line x1="0" y1="-85" x2="22" y2="-107" stroke="url(#ice)" stroke-width="2.5" stroke-linecap="round"/>
+    <circle cx="0" cy="-130" r="4" fill="#c8e8f5"/>
+    <line x1="0" y1="0" x2="112.6" y2="-65" stroke="url(#ice)" stroke-width="5" stroke-linecap="round"/>
+    <line x1="43.3" y1="-25" x2="69.3" y2="-65" stroke="url(#ice)" stroke-width="3.5" stroke-linecap="round"/>
+    <line x1="43.3" y1="-25" x2="73.6" y2="-7.5" stroke="url(#ice)" stroke-width="3.5" stroke-linecap="round"/>
+    <line x1="73.6" y1="-42.5" x2="98" y2="-72" stroke="url(#ice)" stroke-width="2.5" stroke-linecap="round"/>
+    <line x1="73.6" y1="-42.5" x2="104" y2="-27" stroke="url(#ice)" stroke-width="2.5" stroke-linecap="round"/>
+    <circle cx="112.6" cy="-65" r="4" fill="#c8e8f5"/>
+    <line x1="0" y1="0" x2="112.6" y2="65" stroke="url(#ice)" stroke-width="5" stroke-linecap="round"/>
+    <line x1="43.3" y1="25" x2="73.6" y2="7.5" stroke="url(#ice)" stroke-width="3.5" stroke-linecap="round"/>
+    <line x1="43.3" y1="25" x2="69.3" y2="65" stroke="url(#ice)" stroke-width="3.5" stroke-linecap="round"/>
+    <line x1="73.6" y1="42.5" x2="104" y2="27" stroke="url(#ice)" stroke-width="2.5" stroke-linecap="round"/>
+    <line x1="73.6" y1="42.5" x2="98" y2="72" stroke="url(#ice)" stroke-width="2.5" stroke-linecap="round"/>
+    <circle cx="112.6" cy="65" r="4" fill="#c8e8f5"/>
+    <line x1="0" y1="0" x2="0" y2="90" stroke="url(#melt)" stroke-width="5" stroke-linecap="round"/>
+    <line x1="0" y1="50" x2="-28" y2="78" stroke="url(#melt)" stroke-width="3" stroke-linecap="round" opacity="0.7"/>
+    <line x1="0" y1="50" x2="28" y2="78" stroke="url(#melt)" stroke-width="3" stroke-linecap="round" opacity="0.7"/>
+    <ellipse cx="0" cy="100" rx="4" ry="6" fill="#6bb5d0" opacity="0.7"/>
+    <ellipse cx="-3" cy="118" rx="3" ry="4.5" fill="#5da5c2" opacity="0.5"/>
+    <ellipse cx="2" cy="135" rx="2.5" ry="4" fill="#4a95b5" opacity="0.35"/>
+    <ellipse cx="-1" cy="150" rx="2" ry="3.5" fill="#3a8aaa" opacity="0.2"/>
+    <line x1="0" y1="0" x2="-112.6" y2="65" stroke="url(#ice)" stroke-width="5" stroke-linecap="round"/>
+    <line x1="-43.3" y1="25" x2="-73.6" y2="7.5" stroke="url(#ice)" stroke-width="3.5" stroke-linecap="round"/>
+    <line x1="-43.3" y1="25" x2="-69.3" y2="65" stroke="url(#ice)" stroke-width="3.5" stroke-linecap="round"/>
+    <line x1="-73.6" y1="42.5" x2="-98" y2="72" stroke="url(#ice)" stroke-width="2.5" stroke-linecap="round"/>
+    <ellipse cx="-112.6" cy="72" rx="3" ry="4" fill="#6bb5d0" opacity="0.45"/>
+    <ellipse cx="-114" cy="85" rx="2" ry="3" fill="#5da5c2" opacity="0.25"/>
+    <line x1="0" y1="0" x2="-112.6" y2="-65" stroke="url(#ice)" stroke-width="5" stroke-linecap="round"/>
+    <line x1="-43.3" y1="-25" x2="-69.3" y2="-65" stroke="url(#ice)" stroke-width="3.5" stroke-linecap="round"/>
+    <line x1="-43.3" y1="-25" x2="-73.6" y2="-7.5" stroke="url(#ice)" stroke-width="3.5" stroke-linecap="round"/>
+    <line x1="-73.6" y1="-42.5" x2="-98" y2="-72" stroke="url(#ice)" stroke-width="2.5" stroke-linecap="round"/>
+    <line x1="-73.6" y1="-42.5" x2="-104" y2="-27" stroke="url(#ice)" stroke-width="2.5" stroke-linecap="round"/>
+    <circle cx="-112.6" cy="-65" r="4" fill="#c8e8f5"/>
+    <circle cx="0" cy="0" r="10" fill="#b8e6f8" opacity="0.9"/>
+    <circle cx="0" cy="0" r="6" fill="#d4f0fa"/>
+    <circle cx="-2" cy="-2" r="2.5" fill="#eaf8fd" opacity="0.8"/>
+  </g>
+  <g opacity="0.8">
+    <ellipse cx="388" cy="488" rx="4" ry="6" fill="#5da5c2" opacity="0.5"/>
+    <ellipse cx="387" cy="485" rx="1.5" ry="2" fill="#a0daf0" opacity="0.4"/>
+    <ellipse cx="406" cy="510" rx="3" ry="5" fill="#4a95b5" opacity="0.35"/>
+    <ellipse cx="405" cy="508" rx="1.2" ry="1.8" fill="#90d0e8" opacity="0.35"/>
+    <ellipse cx="396" cy="540" rx="2.5" ry="4" fill="#3a8aaa" opacity="0.22"/>
+    <ellipse cx="402" cy="568" rx="2" ry="3.5" fill="#2a7a9a" opacity="0.14"/>
+  </g>
+  <text x="400" y="650" font-family="'Anybody','Avenir Next','Helvetica Neue',sans-serif" font-weight="900" font-stretch="125%" font-size="96" letter-spacing="14" text-anchor="middle" fill="#e0f0f8" filter="url(#glow)">THAW</text>
+  <text x="400" y="695" font-family="'DM Sans','Helvetica Neue',sans-serif" font-weight="400" font-size="18" letter-spacing="6" text-anchor="middle" fill="#5da5c2" opacity="0.7">TERMINAL WORKSPACE MEMORY</text>
+</svg>
