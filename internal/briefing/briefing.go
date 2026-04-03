@@ -2,6 +2,7 @@ package briefing
 
 import (
 	"bytes"
+	_ "embed"
 	"encoding/base64"
 	"fmt"
 	"html"
@@ -9,12 +10,16 @@ import (
 	"os/exec"
 	"path/filepath"
 	"runtime"
+	"strconv"
 	"strings"
 	"time"
 
 	"github.com/joecattt/thaw/internal/config"
 	"github.com/joecattt/thaw/pkg/models"
 )
+
+//go:embed frost_template.html
+var frostTemplate string
 
 // ProjectData holds rendered project info for the briefing.
 type ProjectData struct {
@@ -265,8 +270,6 @@ func formatAgo(t time.Time) string {
 }
 
 func renderHTML(data BriefingData, bcfg config.BriefingConfig) string {
-	var b strings.Builder
-
 	// Build project blocks
 	var projectHTML strings.Builder
 	for i, p := range data.Projects {
@@ -318,13 +321,8 @@ func renderHTML(data BriefingData, bcfg config.BriefingConfig) string {
 			}
 		}
 
-		indent := ""
-		if i > 0 {
-			indent = ` style="margin-left:16px"`
-		}
-
 		projectHTML.WriteString(fmt.Sprintf(`
-        <div class="proj %s" id="%s"%s>
+        <div class="proj %s" id="%s">
           <div class="proj-body">
             <div class="proj-top">
               <div>
@@ -347,7 +345,7 @@ func renderHTML(data BriefingData, bcfg config.BriefingConfig) string {
             %s
           </div>
         </div>`,
-			p.AccentClass, pid, indent,
+			p.AccentClass, pid,
 			html.EscapeString(p.Name), priorityHTML,
 			p.LastActive, p.LastActiveAgo,
 			p.TimeSpent,
@@ -366,120 +364,21 @@ func renderHTML(data BriefingData, bcfg config.BriefingConfig) string {
 		legendHTML.WriteString(fmt.Sprintf(`<div class="legend-item"><div class="legend-dot" style="background:%s"></div>%s<span class="legend-dim">%s</span></div>`, tb.Color, html.EscapeString(tb.Name), tb.Time))
 	}
 
-	// Assemble — note: this is a simplified version of the frost briefing
-	// The full frost briefing with Three.js/GSAP should be loaded as a template file
-	// This generates a clean, functional briefing that works without external dependencies
-	b.WriteString(fmt.Sprintf(`<!DOCTYPE html><html lang="en"><head><meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1"><title>thaw briefing</title>
-<style>
-@import url('https://fonts.googleapis.com/css2?family=Anybody:wdth,wght@75..150,400;75..150,700;75..150,900&family=Fira+Code:wght@400;500;600&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&display=swap');
-:root{--base:#0a2435;--ice-white:#fff;--ice-pale:#f0f8fc;--ice-mid:#8ab8ce;--ice-deep:#3a7a95;--ice-glow:rgba(180,230,255,0.18);--emerald:#34d399;--amber:#f59e0b;--red-alert:#f87171;--display:'Anybody',sans-serif;--mono:'Fira Code',monospace;--prose:'DM Sans',sans-serif}
-*{margin:0;padding:0;box-sizing:border-box}body{background:var(--base);color:var(--ice-pale);min-height:100vh;display:flex;align-items:center;justify-content:center;padding:40px 20px}
-.terminal{width:min(900px,94vw);font-family:var(--prose)}
-.frame{background:rgba(18,60,85,0.15);border:1px solid rgba(160,220,245,0.04);border-radius:8px;padding:clamp(20px,3vh,36px) clamp(24px,3vw,40px);box-shadow:0 25px 60px rgba(0,0,0,0.3)}
-.term-header{display:flex;justify-content:space-between;align-items:center;padding-bottom:14px;margin-bottom:18px;border-bottom:1px solid rgba(140,200,230,0.04)}
-.term-title{font-family:var(--display);font-weight:900;font-stretch:125%%;font-size:18px;letter-spacing:4px;text-transform:uppercase;color:var(--ice-white)}
-.term-date{font-family:var(--prose);font-size:12px;color:var(--ice-mid)}
-.stats{display:flex;gap:0;margin-bottom:18px}.stat{flex:1;padding:14px 16px}
-.stat-lbl{font-family:var(--prose);font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--ice-pale);opacity:0.7;margin-bottom:5px}
-.stat-val{font-family:var(--display);font-weight:900;font-stretch:120%%;color:var(--ice-white);line-height:1}
-.stat:nth-child(1) .stat-val{font-size:36px}.stat:nth-child(2) .stat-val{font-size:28px}
-.stat:nth-child(3) .stat-val{font-size:24px;color:var(--emerald)}.stat:nth-child(4) .stat-val{font-size:20px;color:var(--amber)}
-.time-row{display:flex;gap:2px;height:5px;border-radius:5px;overflow:hidden;margin-bottom:8px;background:rgba(140,200,230,0.03)}
-.time-legend{display:flex;gap:20px;margin-bottom:16px}
-.legend-item{display:flex;align-items:center;gap:6px;font-family:var(--prose);font-size:12px;font-weight:500;color:var(--ice-pale)}
-.legend-dot{width:7px;height:7px;border-radius:2px}.legend-dim{color:var(--ice-mid);margin-left:3px}
-.fracture{height:1px;background:rgba(160,220,245,0.06);margin:14px 0}
-.proj{margin-bottom:6px;border-radius:4px;animation:fadeIn 0.6s ease both}
-.proj:nth-child(2){animation-delay:0.15s}
-@keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
-.proj-body{padding:clamp(14px,2vh,22px) clamp(16px,2vw,26px);border-radius:4px;border-left:7px solid transparent;transition:background 0.3s}
-.proj-body:hover{background:rgba(140,200,230,0.03)}
-.proj.up .proj-body{border-left-color:var(--emerald);background:rgba(52,211,153,0.012)}
-.proj.blocked .proj-body{border-left-color:var(--red-alert);background:rgba(248,113,113,0.008)}
-.proj.dn .proj-body{border-left-color:var(--amber);opacity:0.75}
-.proj-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px}
-.proj-name{font-family:var(--display);font-weight:900;font-stretch:115%%;font-size:20px;color:var(--ice-white)}
-.proj-time{font-family:var(--display);font-weight:700;font-size:20px;color:var(--ice-mid)}
-.proj-last{font-family:var(--prose);font-size:11px;color:var(--ice-pale);opacity:0.55;margin-top:3px}
-.proj-meta{display:flex;gap:8px;align-items:center;margin-bottom:12px;flex-wrap:wrap}
-.tag{font-family:var(--mono);font-size:10px;font-weight:500;padding:5px 14px;border-radius:3px}
-.tag-g{color:var(--emerald);border:1px solid rgba(52,211,153,0.15);background:rgba(52,211,153,0.05)}
-.tag-a{color:var(--amber);border:1px solid rgba(245,158,11,0.12);background:rgba(245,158,11,0.04)}
-.tag-r{color:var(--red-alert);border:1px solid rgba(248,113,113,0.12);background:rgba(248,113,113,0.04)}
-.tag-d{color:var(--ice-mid);border:1px solid rgba(140,185,205,0.1)}
-.priority{font-family:var(--prose);font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;padding:3px 10px;border-radius:3px;display:inline-flex;align-items:center;gap:5px}
-.priority.high{color:var(--red-alert);background:rgba(248,113,113,0.06);border:1px solid rgba(248,113,113,0.12)}
-.priority.low{color:var(--emerald);background:rgba(52,211,153,0.04);border:1px solid rgba(52,211,153,0.1)}
-.priority-dot{width:5px;height:5px;border-radius:50%%}
-.priority.high .priority-dot{background:var(--red-alert)}.priority.low .priority-dot{background:var(--emerald)}
-.lo-lbl{font-family:var(--prose);font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--ice-mid);margin-bottom:10px}
-.lo-txt{font-family:var(--prose);font-size:14px;line-height:1.75;color:var(--ice-pale)}
-.lo-txt strong{color:var(--ice-white);font-weight:700}
-.proc-row{display:flex;gap:16px;margin-top:10px;flex-wrap:wrap}
-.proc{display:flex;align-items:center;gap:6px;font-family:var(--mono);font-size:11px}
-.proc-dot{width:6px;height:6px;border-radius:50%%}
-.proc-dot.on{background:var(--emerald);box-shadow:0 0 6px rgba(52,211,153,0.35)}.proc-dot.off{background:var(--ice-deep);opacity:0.4}
-.proc-name.on{color:var(--ice-pale)}.proc-name.off{color:var(--ice-deep);opacity:0.5}
-.resume-lbl{font-family:var(--prose);font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--ice-mid);margin-top:14px;margin-bottom:6px}
-.cmd{font-family:var(--mono);font-size:11px;padding:4px 10px;display:flex;gap:6px;background:rgba(0,15,25,0.18);border-radius:3px;margin-bottom:2px}
-.cmd .d{color:rgba(52,211,153,0.4)}.cmd .c{color:var(--ice-pale);opacity:0.65}
-.actions{display:flex;gap:12px;margin-top:20px}
-.act{font-family:var(--display);font-weight:700;font-stretch:110%%;font-size:11px;letter-spacing:2px;text-transform:uppercase;
-  padding:14px 28px;background:transparent;color:var(--ice-mid);border:none;cursor:pointer;transition:all 0.3s;border-radius:4px}
-.act:hover{background:rgba(140,200,230,0.05);color:var(--ice-white)}
-.act.primary{color:var(--emerald)}.act.primary:hover{background:rgba(52,211,153,0.04)}
-.footer{margin-top:24px;font-family:var(--prose);font-size:10px;color:var(--ice-deep);letter-spacing:2px;text-transform:uppercase;text-align:center}
-</style></head><body>
-<div class="terminal"><div class="frame">
-<div class="term-header">
-  <div class="term-title">Thaw %s</div>
-  <div class="term-date">%s — %s deep work across %d sessions</div>
-</div>
-<div class="stats">
-  <div class="stat"><div class="stat-lbl">Deep work</div><div class="stat-val">%s</div></div>
-  <div class="stat"><div class="stat-lbl">Sessions</div><div class="stat-val">%d</div></div>
-  <div class="stat"><div class="stat-lbl">Projects</div><div class="stat-val">%d</div></div>
-</div>
-<div class="time-row">%s</div>
-<div class="time-legend">%s</div>
-<div class="fracture"></div>
-%s
-<div class="fracture"></div>
-<div class="actions">
-  <button class="act primary" onclick="alert('thaw → restoring...')">← Restore</button>
-  <button class="act" id="voice-btn" style="display:none" onclick="playVoice()">▶ Voice</button>
-  <button class="act" onclick="document.body.style.opacity=0;setTimeout(()=>window.close(),500)">Dismiss</button>
-</div>
-<div class="footer">thaw %s — generated %s</div>
-</div></div>
-<script id="cortana-audio" type="text/plain"></script>
-<script>
-(function(){
-  var el=document.getElementById('cortana-audio');
-  var btn=document.getElementById('voice-btn');
-  if(!el||!el.textContent||el.textContent.length<100)return;
-  btn.style.display='';
-  var playing=false,audio=null;
-  window.playVoice=function(){
-    if(playing&&audio){audio.pause();audio=null;playing=false;btn.textContent='▶ Voice';return}
-    var b64=el.textContent;
-    audio=new Audio('data:audio/wav;base64,'+b64);
-    audio.onended=function(){playing=false;btn.textContent='▶ Voice'};
-    audio.play();
-    playing=true;
-    btn.textContent='■ Stop';
-  };
-})();
-</script>
-</body></html>`,
-		data.Version, data.Date, data.DeepWork, data.Sessions,
-		data.DeepWork, data.Sessions, len(data.Projects),
-		barsHTML.String(), legendHTML.String(),
-		projectHTML.String(),
-		data.Version, time.Now().Format("3:04 PM")))
+	// Inject data into frost template via marker replacement
+	r := strings.NewReplacer(
+		"<!-- THAW:VERSION -->", html.EscapeString(data.Version),
+		"<!-- THAW:DATE -->", html.EscapeString(data.Date),
+		"<!-- THAW:DEEPWORK -->", html.EscapeString(data.DeepWork),
+		"<!-- THAW:SESSIONS -->", strconv.Itoa(data.Sessions),
+		"<!-- THAW:TESTS -->", html.EscapeString(data.TestSummary),
+		"<!-- THAW:DEPSTATUS -->", html.EscapeString(data.DepStatus),
+		"<!-- THAW:DEPDETAIL -->", html.EscapeString(data.DepDetail),
+		"<!-- THAW:TIMEBARS -->", barsHTML.String(),
+		"<!-- THAW:TIMELEGEND -->", legendHTML.String(),
+		"<!-- THAW:PROJECTS -->", projectHTML.String(),
+	)
 
-	return b.String()
+	return r.Replace(frostTemplate)
 }
 
 // generateVoiceAudio creates a voice recap using Cortana TTS and returns base64.
