@@ -42,7 +42,7 @@ import (
 	"github.com/joecattt/thaw/pkg/models"
 )
 
-var version = "3.3.0"
+var version = "1.0.0"
 
 func main() {
 	root := &cobra.Command{
