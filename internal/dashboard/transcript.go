@@ -3,6 +3,7 @@ package dashboard
 import (
 	"bufio"
 	"encoding/json"
+	"io"
 	"os"
 	"path/filepath"
 	"sort"
@@ -97,7 +98,7 @@ func lastUserText(path string) string {
 	}
 	const tailBytes = 400 * 1024
 	if info.Size() > tailBytes {
-		if _, err := f.Seek(-tailBytes, os.SEEK_END); err != nil {
+		if _, err := f.Seek(-tailBytes, io.SeekEnd); err != nil {
 			return ""
 		}
 	}

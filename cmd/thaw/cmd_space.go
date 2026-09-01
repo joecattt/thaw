@@ -120,7 +120,7 @@ func humanToBytes(h string) int64 {
 		return 0
 	}
 	unit := h[len(h)-1]
-	var mult int64 = 1
+	var mult int64
 	switch unit {
 	case 'K':
 		mult = 1 << 10
