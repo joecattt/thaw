@@ -1,0 +1,17 @@
+version: "2"
+
+# Deliberately not enabling errcheck: the codebase leans on best-effort
+# fire-and-forget calls (deferred Close(), cache writes, cleanup on
+# uninstall/demo paths) throughout, and turning it on surfaces ~50
+# pre-existing findings that would need a real triage pass, not a
+# lint-onboarding commit. Revisit once/if that triage happens.
+linters:
+  default: none
+  enable:
+    - unused
+    - govet
+    - ineffassign
+    - staticcheck
+
+run:
+  timeout: 3m

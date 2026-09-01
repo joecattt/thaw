@@ -1,0 +1,32 @@
+{
+  "_comment": "Every public claim carries an executable probe. Probe exits 0 = the claim is still true. Checked by `reconcile`. Seeded 2026-08-20 when the frost briefing gained real Claude conversation data; README claims still need probes as they are touched.",
+  "allow_env_values": [],
+  "allow_unreferenced": [],
+  "claims": [
+    {
+      "claim": "frost briefing renders real Claude conversations (title, active time, est. cost, resume command), not shell-history guesses",
+      "where": "internal/briefing/claude.go, internal/briefing/frost_template.html",
+      "probe": "rg -q 'Conversations · last 7 days' internal/briefing/briefing.go && rg -q 'claude --resume' internal/briefing/briefing.go && rg -q 'loadClaudeConvos' internal/briefing/claude.go"
+    },
+    {
+      "claim": "briefing cost estimates dedupe streamed content-block lines by message id (one API response counted once)",
+      "where": "internal/briefing/claude.go",
+      "probe": "rg -q 'seen\\[tl.Message.ID\\]' internal/briefing/claude.go"
+    },
+    {
+      "claim": "briefing time is active time with idle gaps excluded, not wall-clock span",
+      "where": "internal/briefing/claude.go idleGap",
+      "probe": "rg -q 'idleGap' internal/briefing/claude.go"
+    },
+    {
+      "claim": "dashboard ledger panel is backed by an in-repo writer",
+      "where": "internal/ledger/ledger.go, internal/dashboard/ledger.go",
+      "probe": "rg -l 'ledger' internal/ledger >/dev/null && go test ./internal/ledger >/dev/null 2>&1"
+    },
+    {
+      "claim": "scrub redacts output/command/children",
+      "where": "internal/scrub/scrub.go, applied in internal/capture/capture.go",
+      "probe": "rg -q 'scrub\\.Slice' internal/capture/capture.go && rg -q 'scrub\\.Text\\(children' internal/capture/capture.go && go test ./internal/scrub -run 'TestText_ProvenEscapes|TestText_KeepsExistingCoverage|TestCommand_FlagStyleSecrets|TestMap_RedactsSecretKeys|TestSlice_ScrubsEachLine' >/dev/null 2>&1"
+    }
+  ]
+}
